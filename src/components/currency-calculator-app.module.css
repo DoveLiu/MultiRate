@@ -1,0 +1,450 @@
+.phone {
+  width: 100%;
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #111111;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.header {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: #202020;
+}
+
+.headerTitleWrap {
+  display: flex;
+  justify-content: center;
+  padding: 24px 20px;
+}
+
+.headerTitle {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.updateBar {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  background: #141414;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.updatePrimary {
+  color: #d1d5db;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+}
+
+.updateSecondary {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.noticeBar,
+.errorBar,
+.infoBar {
+  padding: 8px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.noticeBar {
+  background: #2e2917;
+  color: #fef3c7;
+}
+
+.errorBar {
+  background: #3b1b1f;
+  color: #ffe4e6;
+}
+
+.infoBar {
+  background: #273450;
+  color: #ecfeff;
+}
+
+.currencyList {
+  display: flex;
+  flex-direction: column;
+}
+
+.currencyRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 0;
+  background: #111111;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.currencyRowActive {
+  background: #1e2534;
+}
+
+.flagBox {
+  display: flex;
+  width: 64px;
+  height: 46px;
+  flex: 0 0 64px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 7px;
+  background: #2b2b2b;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.svgFlag {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.flagImage {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.emojiFlag {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.currencyCodeWrap {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+}
+
+.currencyCode {
+  color: #dfdfdf;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.currencyValueWrap {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.currencyValue {
+  min-width: 88px;
+  text-align: right;
+  color: #a8a8a8;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.currencyValueActive {
+  color: #ffffff;
+}
+
+.removeButton {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #7f8794;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.removeButton:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+}
+
+.addRow {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #111111;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.addFlag {
+  display: flex;
+  width: 64px;
+  height: 46px;
+  flex: 0 0 64px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #20273b;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  color: #c7cfdd;
+  font-size: 2rem;
+  font-weight: 300;
+}
+
+.addText {
+  color: #b7b7b7;
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.keypad {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #202020;
+  padding: 12px 16px 16px;
+}
+
+.keyGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.keyButton {
+  display: flex;
+  height: 86px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #1f1f1f;
+  border-radius: 18px;
+  background: #262626;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  color: #f1f1f1;
+  font-size: 2.6rem;
+  font-weight: 300;
+  cursor: pointer;
+}
+
+.keyDanger {
+  color: #d86459;
+}
+
+.keyInfo {
+  color: #76a9e8;
+}
+
+.opsKey {
+  grid-row: span 2 / span 2;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  border: 1px solid #1f1f1f;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #262626;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.opsButton {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  background: transparent;
+  color: #d08b4b;
+  font-size: 2.3rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.opsButton:first-child {
+  border-top: 0;
+}
+
+.opsButtonActive {
+  background: rgba(208, 139, 75, 0.16);
+  color: #f1b36d;
+}
+
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.sheet {
+  width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 32px 32px 0 0;
+  background: #191919;
+  padding: 16px;
+  box-shadow: 0 -18px 60px rgba(0, 0, 0, 0.4);
+}
+
+.sheetHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sheetKicker {
+  color: #6b7280;
+  font-size: 11px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.sheetTitle {
+  margin-top: 8px;
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.sheetClose {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: transparent;
+  color: #d1d5db;
+  font-size: 14px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.sheetSearch {
+  width: 100%;
+  margin-top: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background: #232323;
+  padding: 12px 16px;
+  color: #ffffff;
+  font-size: 16px;
+}
+
+.sheetList {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sheetItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  background: #232323;
+  padding: 12px 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sheetItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sheetItemFlag {
+  display: flex;
+  width: 48px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #2b2b2b;
+}
+
+.sheetItemCode {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.sheetItemName {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.sheetItemAction {
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+.sheetEmpty {
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 24px 16px;
+  text-align: center;
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 420px) {
+  .headerTitle {
+    font-size: 1.45rem;
+  }
+
+  .currencyCode,
+  .currencyValue,
+  .addText {
+    font-size: 1.75rem;
+  }
+
+  .keyButton {
+    height: 74px;
+    font-size: 2.2rem;
+  }
+
+  .opsKey {
+    grid-row: span 2 / span 2;
+  }
+
+  .opsButton {
+    font-size: 2rem;
+  }
+}
