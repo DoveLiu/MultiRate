@@ -736,7 +736,11 @@
     gap: 7px;
     margin-top: 7px;
     min-height: 0;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tagSide {

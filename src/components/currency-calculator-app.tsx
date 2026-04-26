@@ -66,7 +66,6 @@ export function CurrencyCalculatorApp() {
 
   const activeRawValue = rawInputMap[activeCode] ?? "";
   const activeAmount = parseRawToNumber(activeRawValue);
-  const canAddCurrency = selectedCodes.length <= 4;
   const updatedAt = data?.fetchedAt ?? data?.sourceUpdatedAt ?? null;
   const convertedAmounts = computeConvertedAmounts({
     amount: activeAmount,
@@ -463,13 +462,11 @@ export function CurrencyCalculatorApp() {
             );
           })}
 
-          {canAddCurrency ? (
           <button type="button" onClick={() => setIsPickerOpen(true)} className={styles.addTicket}>
             <span className={styles.addTicketPlus}>＋</span>
             <span className={styles.addTicketText}>Add Currency</span>
             <span className={styles.addTicketStamp}>🧳</span>
           </button>
-          ) : null}
         </section>
 
         <section className={styles.keypadSection}>
