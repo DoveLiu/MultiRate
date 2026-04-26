@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState, startTransition } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 import styles from "./currency-calculator-app.module.css";
 import { computeConvertedAmounts, getRateValue } from "@/lib/converter/convert";
 import { CURRENCY_OPTIONS, getCurrencyMeta } from "@/lib/currency/meta";
@@ -34,14 +34,7 @@ const FLAG_CODES: Record<string, string> = {
   CNY: "cn"
 };
 
-type CalculatorOperator = "+" | "-" | "x" | "/";
-
-type PendingOperation = {
-  accumulator: number;
-  code: string;
-  operator: CalculatorOperator;
-  awaitingNextValue: boolean;
-};
+const TAG_COLORS = ["rose", "sky", "sage", "gold", "lavender", "sand", "coral"];
 
 export function CurrencyCalculatorApp() {
   const {
@@ -60,10 +53,10 @@ export function CurrencyCalculatorApp() {
   const { data, isLoading, isRefreshing, error, refresh } = useRates();
   const isOnline = useOnlineStatus();
   const [pickerQuery, setPickerQuery] = useState("");
-  const [pendingOperation, setPendingOperation] = useState<PendingOperation | null>(null);
 
   const activeRawValue = rawInputMap[activeCode] ?? "";
   const activeAmount = parseRawToNumber(activeRawValue);
+  const updatedAt = data?.fetchedAt ?? data?.sourceUpdatedAt ?? null;
   const convertedAmounts = computeConvertedAmounts({
     amount: activeAmount,
     baseCode: activeCode,
@@ -79,7 +72,7 @@ export function CurrencyCalculatorApp() {
 
     const timeoutId = window.setTimeout(() => {
       setInputNotice(null);
-    }, 2200);
+    }, 2400);
 
     return () => window.clearTimeout(timeoutId);
   }, [inputNotice, setInputNotice]);
@@ -112,7 +105,6 @@ export function CurrencyCalculatorApp() {
   }, [pickerQuery, selectedCodes]);
 
   function selectCode(code: string) {
-    setPendingOperation(null);
     setActiveCode(code);
 
     setRawInputMap((previous) => {
@@ -134,9 +126,7 @@ export function CurrencyCalculatorApp() {
 
   function appendDigit(digit: string) {
     setRawInputMap((previous) => {
-      const shouldReplace =
-        pendingOperation?.code === activeCode && pendingOperation.awaitingNextValue;
-      const current = shouldReplace ? "" : previous[activeCode] ?? "";
+      const current = previous[activeCode] ?? "";
       const next =
         current === "0" && digit !== "0" && !current.includes(".") ? digit : `${current}${digit}`;
 
@@ -145,19 +135,11 @@ export function CurrencyCalculatorApp() {
         [activeCode]: next
       };
     });
-
-    setPendingOperation((previous) =>
-      previous?.code === activeCode && previous.awaitingNextValue
-        ? { ...previous, awaitingNextValue: false }
-        : previous
-    );
   }
 
   function appendDecimal() {
     setRawInputMap((previous) => {
-      const shouldReplace =
-        pendingOperation?.code === activeCode && pendingOperation.awaitingNextValue;
-      const current = shouldReplace ? "" : previous[activeCode] ?? "";
+      const current = previous[activeCode] ?? "";
 
       if (current.includes(".")) {
         return previous;
@@ -168,21 +150,12 @@ export function CurrencyCalculatorApp() {
         [activeCode]: current ? `${current}.` : "0."
       };
     });
-
-    setPendingOperation((previous) =>
-      previous?.code === activeCode && previous.awaitingNextValue
-        ? { ...previous, awaitingNextValue: false }
-        : previous
-    );
   }
 
   function backspace() {
-    if (pendingOperation?.code === activeCode && pendingOperation.awaitingNextValue) {
-      return;
-    }
-
     setRawInputMap((previous) => {
       const current = previous[activeCode] ?? "";
+
       return {
         ...previous,
         [activeCode]: current.slice(0, -1)
@@ -191,57 +164,10 @@ export function CurrencyCalculatorApp() {
   }
 
   function clearActive() {
-    setPendingOperation(null);
     setRawInputMap((previous) => ({
       ...previous,
       [activeCode]: ""
     }));
-  }
-
-  function handleOperator(operator: CalculatorOperator) {
-    const currentValue = parseRawToNumber(rawInputMap[activeCode] ?? "") ?? 0;
-
-    if (!pendingOperation || pendingOperation.code !== activeCode) {
-      setPendingOperation({
-        accumulator: currentValue,
-        code: activeCode,
-        operator,
-        awaitingNextValue: true
-      });
-      return;
-    }
-
-    if (pendingOperation.awaitingNextValue) {
-      setPendingOperation({
-        ...pendingOperation,
-        operator
-      });
-      return;
-    }
-
-    const result = applyCalculatorOperation(
-      pendingOperation.accumulator,
-      currentValue,
-      pendingOperation.operator
-    );
-
-    if (result == null) {
-      setPendingOperation(null);
-      setInputNotice("除數不能為 0");
-      return;
-    }
-
-    setRawInputMap((previous) => ({
-      ...previous,
-      [activeCode]: formatEditableAmount(result)
-    }));
-
-    setPendingOperation({
-      accumulator: result,
-      code: activeCode,
-      operator,
-      awaitingNextValue: true
-    });
   }
 
   function handleAddCurrency(code: string) {
@@ -277,44 +203,59 @@ export function CurrencyCalculatorApp() {
     setSelectedCodes(remainingCodes);
 
     if (code === activeCode) {
-      setPendingOperation(null);
       setActiveCode(remainingCodes[0]);
+    }
+  }
+
+  function handleRowKeyDown(event: React.KeyboardEvent<HTMLDivElement>, code: string) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectCode(code);
+    }
+  }
+
+  async function handleRefresh() {
+    const didRefresh = await refresh();
+    if (!didRefresh) {
+      setInputNotice("更新失敗，請稍後再試");
     }
   }
 
   return (
     <>
       <div className={styles.phone}>
-        <header className={styles.header}>
-          <div className={styles.headerTitleWrap}>
-            <h1 className={styles.headerTitle}>匯率計算機</h1>
+        <header className={styles.hero}>
+          <div className={styles.heroStamp}>✦</div>
+          <div className={styles.heroBadge}>🧳</div>
+          <div className={styles.heroContent}>
+            <p className={styles.heroKicker}>Travel Exchange Notes</p>
+            <h1 className={styles.heroTitle}>Exchange Calculator</h1>
+            <div className={styles.heroMeta}>Updated: {formatDateTime(updatedAt)}</div>
           </div>
         </header>
 
-        <div className={styles.updateBar}>
-          <div className={styles.updatePrimary}>更新: {formatDateTime(data?.sourceUpdatedAt ?? null)}</div>
-          <div className={styles.updateSecondary}>
-            伺服器抓取: {formatDateTime(data?.fetchedAt ?? null)}
-            {data?.stale ? " · fallback" : ""}
-          </div>
-        </div>
-
         {!isOnline || data?.stale || error ? (
-          <div className={styles.noticeBar}>
-            {!isOnline ? <div>目前為離線狀態，畫面會優先使用最近一次成功資料。</div> : null}
-            {data?.stale ? <div>台銀來源暫時無法更新，正在顯示最近一次成功取得的匯率。</div> : null}
-            {error ? <div>{error}</div> : null}
+          <div className={styles.noticeStack}>
+            {!isOnline ? <div className={styles.noticeCard}>目前離線中，將顯示最近一次成功抓到的匯率。</div> : null}
+            {data?.stale ? <div className={styles.noticeCard}>官方來源暫時異常，畫面正在使用快取資料。</div> : null}
+            {error ? <div className={styles.noticeCard}>{error}</div> : null}
           </div>
         ) : null}
 
         {!data?.rates && !isLoading ? (
-          <div className={styles.errorBar}>目前尚未取得台灣銀行匯率資料，請稍後再試。</div>
+          <div className={styles.noticeStack}>
+            <div className={styles.noticeCard}>目前沒有可用匯率資料，請稍後重新整理。</div>
+          </div>
         ) : null}
 
-        {inputNotice ? <div className={styles.infoBar}>{inputNotice}</div> : null}
+        {inputNotice ? (
+          <div className={styles.noticeStack}>
+            <div className={styles.infoCard}>{inputNotice}</div>
+          </div>
+        ) : null}
 
-        <section className={styles.currencyList}>
-          {listItems.map((currency) => {
+        <section className={styles.tagList}>
+          {listItems.map((currency, index) => {
             const isActive = currency.code === activeCode;
             const numericValue = convertedAmounts[currency.code];
             const currentRate = getRateValue(data?.rates ?? null, currency.code, rateType);
@@ -328,79 +269,82 @@ export function CurrencyCalculatorApp() {
                   : "0";
 
             return (
-              <button
+              <div
                 key={currency.code}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => selectCode(currency.code)}
-                className={`${styles.currencyRow} ${isActive ? styles.currencyRowActive : ""}`}
+                onKeyDown={(event) => handleRowKeyDown(event, currency.code)}
+                className={`${styles.tagRow} ${isActive ? styles.tagRowActive : ""}`}
               >
-                <div className={styles.flagBox}>{renderFlag(currency, styles)}</div>
+                <span
+                  className={styles.tagSide}
+                  data-color={TAG_COLORS[index % TAG_COLORS.length]}
+                  aria-hidden="true"
+                >
+                  <span className={styles.tagHole} />
+                </span>
 
-                <div className={styles.currencyCodeWrap}>
-                  <span className={styles.currencyCode}>{currency.code}</span>
-                </div>
+                <span className={styles.tagMain}>
+                  <span className={styles.tagFlagBox}>{renderFlag(currency, styles)}</span>
 
-                <div className={styles.currencyValueWrap}>
-                  <span className={`${styles.currencyValue} ${isActive ? styles.currencyValueActive : ""}`}>
+                  <span className={styles.tagCurrency}>
+                    <span className={styles.tagCode}>{currency.code}</span>
+                    <span className={styles.tagName}>{currency.nameZh}</span>
+                  </span>
+
+                  <span className={styles.tagValueWrap}>
+                  <span className={`${styles.tagValue} ${isActive ? styles.tagValueActive : ""}`}>
                     {displayValue || "0"}
                   </span>
-                  <button
-                    type="button"
-                    className={styles.removeButton}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      handleRemoveCurrency(currency.code);
-                    }}
-                    aria-label={`移除 ${currency.code}`}
-                    disabled={selectedCodes.length <= 1}
-                  >
-                    ×
-                  </button>
-                </div>
-              </button>
+                  </span>
+
+                  <span className={styles.tagActions}>
+                    <button
+                      type="button"
+                      className={styles.removeButton}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRemoveCurrency(currency.code);
+                      }}
+                      aria-label={`刪除 ${currency.code}`}
+                      disabled={selectedCodes.length <= 1}
+                    >
+                      ×
+                    </button>
+                  </span>
+                </span>
+              </div>
             );
           })}
 
-          <button type="button" onClick={() => setIsPickerOpen(true)} className={styles.addRow}>
-            <span className={styles.addFlag}>+</span>
-            <span className={styles.addText}>添加貨幣</span>
+          <button type="button" onClick={() => setIsPickerOpen(true)} className={styles.addTicket}>
+            <span className={styles.addTicketPlus}>＋</span>
+            <span className={styles.addTicketText}>Add Currency</span>
+            <span className={styles.addTicketStamp}>🧳</span>
           </button>
         </section>
 
-        <section className={styles.keypad}>
-          <div className={styles.keyGrid}>
+        <section className={styles.keypadSection}>
+          <div className={styles.keypad}>
             <KeyButton label="C" danger onClick={clearActive} />
             <KeyButton label="7" onClick={() => appendDigit("7")} />
             <KeyButton label="8" onClick={() => appendDigit("8")} />
             <KeyButton label="9" onClick={() => appendDigit("9")} />
 
-            <IconKeyButton info onClick={refresh}>
-              <RefreshIcon />
+            <IconKeyButton info onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshIcon spinning={isRefreshing} />
             </IconKeyButton>
             <KeyButton label="4" onClick={() => appendDigit("4")} />
             <KeyButton label="5" onClick={() => appendDigit("5")} />
             <KeyButton label="6" onClick={() => appendDigit("6")} />
 
-            <div className={styles.opsKey}>
-              {(["+", "-", "x", "/"] as CalculatorOperator[]).map((operator) => (
-                <button
-                  key={operator}
-                  type="button"
-                  onClick={() => handleOperator(operator)}
-                  className={`${styles.opsButton} ${
-                    pendingOperation?.code === activeCode && pendingOperation.operator === operator
-                      ? styles.opsButtonActive
-                      : ""
-                  }`}
-                >
-                  {operator}
-                </button>
-              ))}
-            </div>
+            <span className={styles.keypadSpacer} aria-hidden="true" />
             <KeyButton label="1" onClick={() => appendDigit("1")} />
             <KeyButton label="2" onClick={() => appendDigit("2")} />
             <KeyButton label="3" onClick={() => appendDigit("3")} />
 
+            <span className={styles.keypadSpacer} aria-hidden="true" />
             <KeyButton label="0" onClick={() => appendDigit("0")} />
             <KeyButton label="." onClick={appendDecimal} />
             <IconKeyButton onClick={backspace}>
@@ -413,23 +357,30 @@ export function CurrencyCalculatorApp() {
       {isPickerOpen ? (
         <div className={styles.sheetBackdrop}>
           <div className={styles.sheet}>
+            <div className={styles.sheetAirmail} />
+
             <div className={styles.sheetHeader}>
-              <div>
-                <div className={styles.sheetKicker}>Add Currency</div>
-                <div className={styles.sheetTitle}>新增顯示幣別</div>
-              </div>
-              <button type="button" onClick={() => setIsPickerOpen(false)} className={styles.sheetClose}>
-                關閉
+              <button type="button" onClick={() => setIsPickerOpen(false)} className={styles.sheetBackButton}>
+                ←
               </button>
+              <div className={styles.sheetTitleGroup}>
+                <div className={styles.sheetTitle}>Add Display Currencies</div>
+                <div className={styles.sheetSubtitle}>Search by currency code or name</div>
+              </div>
+              <div className={styles.sheetDecor}>✈️</div>
             </div>
 
-            <input
-              type="text"
-              value={pickerQuery}
-              onChange={(event) => setPickerQuery(event.target.value)}
-              placeholder="搜尋幣別代碼或名稱"
-              className={styles.sheetSearch}
-            />
+            <div className={styles.searchWrap}>
+              <span className={styles.searchIcon}>⌕</span>
+              <input
+                type="text"
+                value={pickerQuery}
+                onChange={(event) => setPickerQuery(event.target.value)}
+                placeholder="搜尋幣別代碼或名稱"
+                className={styles.sheetSearch}
+              />
+              <span className={styles.searchStamp}>🪪</span>
+            </div>
 
             <div className={styles.sheetList}>
               {filteredCurrencies.length ? (
@@ -451,7 +402,7 @@ export function CurrencyCalculatorApp() {
                   </button>
                 ))
               ) : (
-                <div className={styles.sheetEmpty}>查無可加入的幣別</div>
+                <div className={styles.sheetEmpty}>找不到符合條件的幣別。</div>
               )}
             </div>
           </div>
@@ -480,14 +431,21 @@ function KeyButton({
 function IconKeyButton({
   children,
   onClick,
-  info = false
+  info = false,
+  disabled = false
 }: {
   children: ReactNode;
   onClick: () => void;
   info?: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <button type="button" onClick={onClick} className={`${styles.keyButton} ${info ? styles.keyInfo : ""}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`${styles.keyButton} ${info ? styles.keyInfo : ""} ${disabled ? styles.keyDisabled : ""}`}
+    >
       {children}
     </button>
   );
@@ -544,25 +502,6 @@ function parseRawToNumber(rawValue: string) {
 
   const parsed = Number(rawValue);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function applyCalculatorOperation(
-  leftValue: number,
-  rightValue: number,
-  operator: CalculatorOperator
-) {
-  switch (operator) {
-    case "+":
-      return leftValue + rightValue;
-    case "-":
-      return leftValue - rightValue;
-    case "x":
-      return leftValue * rightValue;
-    case "/":
-      return rightValue === 0 ? null : leftValue / rightValue;
-    default:
-      return rightValue;
-  }
 }
 
 function formatRawInputLikeApp(rawValue: string) {

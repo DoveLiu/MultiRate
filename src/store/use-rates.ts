@@ -21,11 +21,15 @@ export function useRates() {
         cache: "no-store"
       });
       const payload = (await response.json()) as RatesPayload;
+      const nextError = !response.ok ? payload.error ?? "無法取得匯率資料" : payload.error;
 
       setData(payload);
-      setError(!response.ok ? payload.error ?? "無法載入匯率資料" : payload.error);
+      setError(nextError);
+
+      return response.ok && !nextError;
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "無法載入匯率資料");
+      setError(caughtError instanceof Error ? caughtError.message : "無法取得匯率資料");
+      return false;
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);

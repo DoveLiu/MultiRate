@@ -35,12 +35,18 @@ export function formatDateTime(rawValue: string | null) {
     return "unavailable";
   }
 
-  return new Intl.DateTimeFormat("zh-TW", {
+  const formatter = new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
     hour12: false
-  }).format(date);
+  });
+
+  const parts = formatter.formatToParts(date);
+  const valueByType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+
+  return `${valueByType.year}/${valueByType.month}/${valueByType.day} ${valueByType.hour}:${valueByType.minute}`;
 }

@@ -2,24 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --text: #e5eefc;
-}
-
 * {
   box-sizing: border-box;
-}
-
-html {
-  color-scheme: dark;
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  color: var(--text);
-  font-family: "IBM Plex Sans", "Noto Sans TC", "Segoe UI", sans-serif;
-  background: #0f0f10;
+  color: #4c2f1d;
+  font-family: "Noto Sans TC", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.55), transparent 30%),
+    linear-gradient(180deg, #f8eedf 0%, #f3e4cf 100%);
 }
 
 button,
