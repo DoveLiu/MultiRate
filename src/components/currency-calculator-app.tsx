@@ -361,7 +361,6 @@ export function CurrencyCalculatorApp() {
       <div className={styles.phone}>
         <header className={styles.hero}>
           <div className={styles.heroStamp}>✦</div>
-          <div className={styles.heroBadge}>🧳</div>
           <div className={styles.heroContent}>
             <p className={styles.heroKicker}>Travel Exchange Notes</p>
             <h1 className={styles.heroTitle}>Exchange Calculator</h1>
@@ -465,7 +464,7 @@ export function CurrencyCalculatorApp() {
           <button type="button" onClick={() => setIsPickerOpen(true)} className={styles.addTicket}>
             <span className={styles.addTicketPlus}>＋</span>
             <span className={styles.addTicketText}>Add Currency</span>
-            <span className={styles.addTicketStamp}>🧳</span>
+            <TravelBagIcon />
           </button>
         </section>
 
@@ -625,6 +624,70 @@ function IconKeyButton({
     >
       {children}
     </button>
+  );
+}
+
+function TravelBagIcon() {
+  return (
+    <svg
+      viewBox="0 0 96 70"
+      className={styles.addTicketStamp}
+      aria-hidden="true"
+      fill="none"
+    >
+      <path
+        d="M35 18c2-9 8-13 17-12 9 1 14 6 15 16"
+        stroke="#9f6d43"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M36 18c2-6 7-9 15-8 7 1 11 4 12 11"
+        stroke="#f1cfaa"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M10 23c2-7 7-10 15-10h47c8 0 13 4 15 12l4 25c1 8-4 14-12 15H19c-8 0-13-5-13-13l4-29Z"
+        fill="#e8bd8c"
+        stroke="#9c6a43"
+        strokeWidth="3"
+      />
+      <path
+        d="M14 28c3-5 8-8 15-8h42c7 0 11 3 14 9"
+        stroke="#f8d9b5"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      <path d="M24 15v49M75 19v43" stroke="#a76e42" strokeWidth="3" />
+      <path d="M28 17v46M71 18v45" stroke="#f4d0a8" strokeWidth="2" />
+      <path
+        d="M38 31h26c3 0 5 2 5 5v13c0 3-2 5-5 5H38c-3 0-5-2-5-5V36c0-3 2-5 5-5Z"
+        fill="#fff2dc"
+        stroke="#d79d70"
+        strokeWidth="2"
+      />
+      <path d="M41 38h19M41 44h15" stroke="#d77255" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M66 45 91 36l5 17-25 9-5-17Z"
+        fill="#d95741"
+        stroke="#9c4a35"
+        strokeWidth="2"
+      />
+      <path d="M72 49 89 43M80 45l2 11" stroke="#fff3dd" strokeWidth="3" strokeLinecap="round" />
+      <path
+        d="M13 35 6 49l17 9 7-14-17-9Z"
+        fill="#fff2dc"
+        stroke="#c68c64"
+        strokeWidth="2"
+      />
+      <path d="m15 42 2 4 5 1-4 3 1 5-4-3-5 2 2-5-3-4 5 1 1-4Z" fill="#e86758" />
+      <circle cx="18" cy="34" r="2.5" fill="#a76e42" />
+      <path d="M20 34c6-8 12-10 20-8" stroke="#a76e42" strokeWidth="2" strokeLinecap="round" />
+      <circle cx="31" cy="25" r="1.7" fill="#7d5538" />
+      <circle cx="65" cy="25" r="1.7" fill="#7d5538" />
+      <path d="M17 61c15 4 43 5 65-1" stroke="#845a3c" strokeOpacity="0.22" strokeWidth="3" />
+    </svg>
   );
 }
 
