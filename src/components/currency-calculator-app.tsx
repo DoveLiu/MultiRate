@@ -36,6 +36,15 @@ const FLAG_CODES: Record<string, string> = {
 
 const TAG_COLORS = ["rose", "sky", "sage", "gold", "lavender", "sand", "coral"];
 
+type CalculatorOperator = "+" | "-" | "×" | "÷";
+
+type PendingOperation = {
+  accumulator: number;
+  code: string;
+  operator: CalculatorOperator;
+  awaitingNextValue: boolean;
+};
+
 export function CurrencyCalculatorApp() {
   const {
     selectedCodes,
@@ -53,9 +62,11 @@ export function CurrencyCalculatorApp() {
   const { data, isLoading, isRefreshing, error, refresh } = useRates();
   const isOnline = useOnlineStatus();
   const [pickerQuery, setPickerQuery] = useState("");
+  const [pendingOperation, setPendingOperation] = useState<PendingOperation | null>(null);
 
   const activeRawValue = rawInputMap[activeCode] ?? "";
   const activeAmount = parseRawToNumber(activeRawValue);
+  const canAddCurrency = selectedCodes.length <= 4;
   const updatedAt = data?.fetchedAt ?? data?.sourceUpdatedAt ?? null;
   const convertedAmounts = computeConvertedAmounts({
     amount: activeAmount,
@@ -105,6 +116,7 @@ export function CurrencyCalculatorApp() {
   }, [pickerQuery, selectedCodes]);
 
   function selectCode(code: string) {
+    setPendingOperation(null);
     setActiveCode(code);
 
     setRawInputMap((previous) => {
@@ -126,7 +138,9 @@ export function CurrencyCalculatorApp() {
 
   function appendDigit(digit: string) {
     setRawInputMap((previous) => {
-      const current = previous[activeCode] ?? "";
+      const shouldReplace =
+        pendingOperation?.code === activeCode && pendingOperation.awaitingNextValue;
+      const current = shouldReplace ? "" : previous[activeCode] ?? "";
       const next =
         current === "0" && digit !== "0" && !current.includes(".") ? digit : `${current}${digit}`;
 
@@ -135,11 +149,19 @@ export function CurrencyCalculatorApp() {
         [activeCode]: next
       };
     });
+
+    setPendingOperation((previous) =>
+      previous?.code === activeCode && previous.awaitingNextValue
+        ? { ...previous, awaitingNextValue: false }
+        : previous
+    );
   }
 
   function appendDecimal() {
     setRawInputMap((previous) => {
-      const current = previous[activeCode] ?? "";
+      const shouldReplace =
+        pendingOperation?.code === activeCode && pendingOperation.awaitingNextValue;
+      const current = shouldReplace ? "" : previous[activeCode] ?? "";
 
       if (current.includes(".")) {
         return previous;
@@ -150,9 +172,20 @@ export function CurrencyCalculatorApp() {
         [activeCode]: current ? `${current}.` : "0."
       };
     });
+
+    setPendingOperation((previous) =>
+      previous?.code === activeCode && previous.awaitingNextValue
+        ? { ...previous, awaitingNextValue: false }
+        : previous
+    );
   }
 
   function backspace() {
+    if (pendingOperation?.code === activeCode && pendingOperation.awaitingNextValue) {
+      setPendingOperation(null);
+      return;
+    }
+
     setRawInputMap((previous) => {
       const current = previous[activeCode] ?? "";
 
@@ -164,10 +197,112 @@ export function CurrencyCalculatorApp() {
   }
 
   function clearActive() {
+    setPendingOperation(null);
     setRawInputMap((previous) => ({
       ...previous,
       [activeCode]: ""
     }));
+  }
+
+  function toggleSign() {
+    setPendingOperation(null);
+    setRawInputMap((previous) => {
+      const current = previous[activeCode] ?? "";
+
+      if (!current || current === "0") {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [activeCode]: current.startsWith("-") ? current.slice(1) : `-${current}`
+      };
+    });
+  }
+
+  function applyPercent() {
+    const currentValue = parseRawToNumber(rawInputMap[activeCode] ?? "");
+
+    if (currentValue == null) {
+      return;
+    }
+
+    setPendingOperation(null);
+    setRawInputMap((previous) => ({
+      ...previous,
+      [activeCode]: formatEditableAmount(currentValue / 100)
+    }));
+  }
+
+  function handleOperator(operator: CalculatorOperator) {
+    const currentValue = parseRawToNumber(rawInputMap[activeCode] ?? "") ?? 0;
+
+    if (!pendingOperation || pendingOperation.code !== activeCode) {
+      setPendingOperation({
+        accumulator: currentValue,
+        code: activeCode,
+        operator,
+        awaitingNextValue: true
+      });
+      return;
+    }
+
+    if (pendingOperation.awaitingNextValue) {
+      setPendingOperation({
+        ...pendingOperation,
+        operator
+      });
+      return;
+    }
+
+    const result = applyCalculatorOperation(
+      pendingOperation.accumulator,
+      currentValue,
+      pendingOperation.operator
+    );
+
+    if (result == null) {
+      setPendingOperation(null);
+      setInputNotice("Cannot divide by zero");
+      return;
+    }
+
+    setRawInputMap((previous) => ({
+      ...previous,
+      [activeCode]: formatEditableAmount(result)
+    }));
+
+    setPendingOperation({
+      accumulator: result,
+      code: activeCode,
+      operator,
+      awaitingNextValue: true
+    });
+  }
+
+  function handleEquals() {
+    if (!pendingOperation || pendingOperation.code !== activeCode || pendingOperation.awaitingNextValue) {
+      return;
+    }
+
+    const currentValue = parseRawToNumber(rawInputMap[activeCode] ?? "") ?? 0;
+    const result = applyCalculatorOperation(
+      pendingOperation.accumulator,
+      currentValue,
+      pendingOperation.operator
+    );
+
+    if (result == null) {
+      setPendingOperation(null);
+      setInputNotice("Cannot divide by zero");
+      return;
+    }
+
+    setRawInputMap((previous) => ({
+      ...previous,
+      [activeCode]: formatEditableAmount(result)
+    }));
+    setPendingOperation(null);
   }
 
   function handleAddCurrency(code: string) {
@@ -203,6 +338,7 @@ export function CurrencyCalculatorApp() {
     setSelectedCodes(remainingCodes);
 
     if (code === activeCode) {
+      setPendingOperation(null);
       setActiveCode(remainingCodes[0]);
     }
   }
@@ -232,6 +368,15 @@ export function CurrencyCalculatorApp() {
             <h1 className={styles.heroTitle}>Exchange Calculator</h1>
             <div className={styles.heroMeta}>Updated: {formatDateTime(updatedAt)}</div>
           </div>
+          <button
+            type="button"
+            className={styles.heroRefresh}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            aria-label="Refresh exchange rates"
+          >
+            <RefreshIcon spinning={isRefreshing} />
+          </button>
         </header>
 
         {!isOnline || data?.stale || error ? (
@@ -318,38 +463,63 @@ export function CurrencyCalculatorApp() {
             );
           })}
 
+          {canAddCurrency ? (
           <button type="button" onClick={() => setIsPickerOpen(true)} className={styles.addTicket}>
             <span className={styles.addTicketPlus}>＋</span>
             <span className={styles.addTicketText}>Add Currency</span>
             <span className={styles.addTicketStamp}>🧳</span>
           </button>
+          ) : null}
         </section>
 
         <section className={styles.keypadSection}>
           <div className={styles.keypad}>
-            <KeyButton label="C" danger onClick={clearActive} />
+            <IconKeyButton tone="function" onClick={backspace}>
+              <BackspaceIcon />
+            </IconKeyButton>
+            <KeyButton label="AC" tone="function" onClick={clearActive} />
+            <KeyButton label="%" tone="function" onClick={applyPercent} />
+            <KeyButton
+              label="÷"
+              tone="operator"
+              active={pendingOperation?.code === activeCode && pendingOperation.operator === "÷"}
+              onClick={() => handleOperator("÷")}
+            />
+
             <KeyButton label="7" onClick={() => appendDigit("7")} />
             <KeyButton label="8" onClick={() => appendDigit("8")} />
             <KeyButton label="9" onClick={() => appendDigit("9")} />
+            <KeyButton
+              label="×"
+              tone="operator"
+              active={pendingOperation?.code === activeCode && pendingOperation.operator === "×"}
+              onClick={() => handleOperator("×")}
+            />
 
-            <IconKeyButton info onClick={handleRefresh} disabled={isRefreshing}>
-              <RefreshIcon spinning={isRefreshing} />
-            </IconKeyButton>
             <KeyButton label="4" onClick={() => appendDigit("4")} />
             <KeyButton label="5" onClick={() => appendDigit("5")} />
             <KeyButton label="6" onClick={() => appendDigit("6")} />
+            <KeyButton
+              label="-"
+              tone="operator"
+              active={pendingOperation?.code === activeCode && pendingOperation.operator === "-"}
+              onClick={() => handleOperator("-")}
+            />
 
-            <span className={styles.keypadSpacer} aria-hidden="true" />
             <KeyButton label="1" onClick={() => appendDigit("1")} />
             <KeyButton label="2" onClick={() => appendDigit("2")} />
             <KeyButton label="3" onClick={() => appendDigit("3")} />
+            <KeyButton
+              label="+"
+              tone="operator"
+              active={pendingOperation?.code === activeCode && pendingOperation.operator === "+"}
+              onClick={() => handleOperator("+")}
+            />
 
-            <span className={styles.keypadSpacer} aria-hidden="true" />
+            <KeyButton label="+/-" tone="function" onClick={toggleSign} />
             <KeyButton label="0" onClick={() => appendDigit("0")} />
             <KeyButton label="." onClick={appendDecimal} />
-            <IconKeyButton onClick={backspace}>
-              <BackspaceIcon />
-            </IconKeyButton>
+            <KeyButton label="=" tone="operator" onClick={handleEquals} />
           </div>
         </section>
       </div>
@@ -415,14 +585,22 @@ export function CurrencyCalculatorApp() {
 function KeyButton({
   label,
   onClick,
-  danger = false
+  tone = "number",
+  active = false
 }: {
   label: string;
   onClick: () => void;
-  danger?: boolean;
+  tone?: "number" | "function" | "operator";
+  active?: boolean;
 }) {
   return (
-    <button type="button" onClick={onClick} className={`${styles.keyButton} ${danger ? styles.keyDanger : ""}`}>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`${styles.keyButton} ${tone === "function" ? styles.keyFunction : ""} ${
+        tone === "operator" ? styles.keyOperator : ""
+      } ${active ? styles.keyActive : ""}`}
+    >
       {label}
     </button>
   );
@@ -431,12 +609,12 @@ function KeyButton({
 function IconKeyButton({
   children,
   onClick,
-  info = false,
+  tone = "number",
   disabled = false
 }: {
   children: ReactNode;
   onClick: () => void;
-  info?: boolean;
+  tone?: "number" | "function" | "operator";
   disabled?: boolean;
 }) {
   return (
@@ -444,7 +622,9 @@ function IconKeyButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`${styles.keyButton} ${info ? styles.keyInfo : ""} ${disabled ? styles.keyDisabled : ""}`}
+      className={`${styles.keyButton} ${tone === "function" ? styles.keyFunction : ""} ${
+        tone === "operator" ? styles.keyOperator : ""
+      } ${disabled ? styles.keyDisabled : ""}`}
     >
       {children}
     </button>
@@ -502,6 +682,25 @@ function parseRawToNumber(rawValue: string) {
 
   const parsed = Number(rawValue);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function applyCalculatorOperation(
+  leftValue: number,
+  rightValue: number,
+  operator: CalculatorOperator
+) {
+  switch (operator) {
+    case "+":
+      return leftValue + rightValue;
+    case "-":
+      return leftValue - rightValue;
+    case "×":
+      return leftValue * rightValue;
+    case "÷":
+      return rightValue === 0 ? null : leftValue / rightValue;
+    default:
+      return rightValue;
+  }
 }
 
 function formatRawInputLikeApp(rawValue: string) {
